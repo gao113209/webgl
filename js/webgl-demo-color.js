@@ -1,0 +1,142 @@
+main();
+function main() {
+    //0.从canvas中获取WebGL--选择清洁剂颜色(黑)，并使用清洁剂
+    const canvas = document.querySelector("#glcanvas");
+    const webgl = canvas.getContext("webgl");
+
+    if (!webgl) {
+        console.log('浏览器不支持');
+        //return;
+    } else {
+        console.log("pass 1");
+    };
+
+    webgl.clearColor(0.0, 0.0, 0.0, 1.0);
+    webgl.clear(webgl.COLOR_BUFFER_BIT);
+
+    //1.定义顶点着色器的GLSL--位置既位置
+    const vsSource = `
+  attribute vec4 aPosition;
+  attribute vec4 aColor;
+
+  varying lowp vec4 vColor;
+  void main(){
+      gl_Position = aPosition;
+      vColor = aColor;
+  }
+
+`;
+    //2.定义片段着色器的GLSL--上色均为白
+    const fsSource = `
+  varying lowp vec4 vColor;
+  void main(){
+      gl_FragColor = vColor;
+  }
+
+`;
+
+
+    //3.使用两个着色器的GLSL
+    const vShaderF = function () {
+        //一个空的vs着色器
+        const shader = webgl.createShader(webgl.VERTEX_SHADER);
+        //添加GLSL
+        webgl.shaderSource(shader, vsSource);
+        //编译生成一个vs着色器
+        webgl.compileShader(shader);
+        return shader;
+    };
+
+    const fShaderF = function () {
+        //一个空的fs着色器
+        const shader = webgl.createShader(webgl.FRAGMENT_SHADER);
+        //添加GLSL
+        webgl.shaderSource(shader, fsSource);
+        //编译生成一个vs着色器
+        webgl.compileShader(shader);
+        return shader;
+    };
+    const vShader = vShaderF();
+    const fShader = fShaderF();
+
+    //4.创建使用两个着色器的着色器系统--附加两个着色器后，连接成着色器
+    const shaderProgram = webgl.createProgram();
+    webgl.attachShader(shaderProgram, vShader);
+    webgl.attachShader(shaderProgram, fShader);
+    webgl.linkProgram(shaderProgram);
+
+    if (!webgl.getProgramParameter(shaderProgram, webgl.LINK_STATUS)) {
+        console.log('初始化着色器系统失败 ');
+        //return;
+    } else {
+        console.log("pass 2");
+    };
+
+
+    //5.手动将GLSL中的Attribute(Uniform)，分配到对应的变量中
+    const aPosition = webgl.getAttribLocation(shaderProgram, 'aPosition');
+    const aColor = webgl.getAttribLocation(shaderProgram, 'aColor');
+
+    //6.制作顶点（颜色）的缓冲区
+    const positionBuffer = webgl.createBuffer();
+    //绑定新创建的缓冲区--事先预定Data为Array类型的坐标点
+    webgl.bindBuffer(webgl.ARRAY_BUFFER, positionBuffer);
+    //坐标数组
+    const vertices = [
+        0.5, 0.5,   //右上   *------*
+        -0.5, 0.5,  //左上     \
+        0.5, -0.5,  //右下       \
+        -0.5, -0.5, //左下         \
+    ];              //       -------*
+    //坐标数组的size导入缓冲区
+    webgl.bufferData(webgl.ARRAY_BUFFER, 
+        new Float32Array(vertices),
+        webgl.STATIC_DRAW);
+
+    const colorBuffer = webgl.createBuffer();
+    const colors = [
+        1.0, 0.0, 1.0, 1.0,
+        1.0, 0.0, 0.0, 1.0,
+        0.0, 1.0, 0.0, 1.0,
+        0.0, 0.0, 1.0, 1.0,
+    ]
+    webgl.bindBuffer(webgl.ARRAY_BUFFER,colorBuffer);
+    webgl.bufferData(webgl.ARRAY_BUFFER,new Float32Array(colors),webgl.STATIC_DRAW);
+
+    //7.场景渲染
+    //先绑定Buffer--再制定Attribute的读取规则
+    webgl.bindBuffer(webgl.ARRAY_BUFFER, positionBuffer);
+    webgl.vertexAttribPointer(
+        aPosition,   //Attribute的对应变量
+        2,           //位置点的维度(x,y,z)
+        webgl.FLOAT,
+        false,
+        0,          //距离到下一个位置点的数组长度
+        0           //第一个位置点的起点
+    );
+    //激活对应的Attribute
+    webgl.enableVertexAttribArray(aPosition);
+
+    //先绑定Buffer--再制定Attribute的读取规则
+    webgl.bindBuffer(webgl.ARRAY_BUFFER,colorBuffer);
+    webgl.vertexAttribPointer(
+        aColor,   //Attribute的对应变量
+        4,           //色彩的维度(r,g,b,a)
+        webgl.FLOAT,
+        false,
+        0,          //距离到下一个点的数组长度
+        0           //第一个点的起点
+    );
+    //激活对应的Attribute
+    webgl.enableVertexAttribArray(aColor);
+
+
+    //使用编辑好的着色器系统
+    webgl.useProgram(shaderProgram);
+    webgl.drawArrays(
+        webgl.TRIANGLE_STRIP, //构造三角形面的方法之一（比较省坐标点的方法）
+        0,
+        4                  //四个坐标点
+    );
+
+}
