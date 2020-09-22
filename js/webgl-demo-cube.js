@@ -23,11 +23,12 @@ function main() {
   const vsSource = `
     attribute vec4 aVertexPosition;
     attribute vec2 aTextureCoord;
-    uniform mat4 uModelViewMatrix;
+    uniform mat4 uViewMatrix;
+    uniform mat4 uModelMatrix;
     uniform mat4 uProjectionMatrix;
     varying highp vec2 vTextureCoord;
     void main(void) {
-      gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+      gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * aVertexPosition;
       vTextureCoord = aTextureCoord;
     }
   `;
@@ -58,7 +59,8 @@ function main() {
     },
     uniformLocations: {
       projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
-      modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
+      viewMatrix: gl.getUniformLocation(shaderProgram, 'uViewMatrix'),
+      modelMatrix: gl.getUniformLocation(shaderProgram, 'uModelMatrix'),
       uSampler: gl.getUniformLocation(shaderProgram, 'uSampler'),
     }
   };
@@ -321,22 +323,31 @@ function drawScene(gl, programInfo, buffers, texture, deltaTime) {
 
   // Set the drawing position to the "identity" point, which is
   // the center of the scene.
-  const modelViewMatrix = mat4.create();
+  const viewMatrix = mat4.create();
+  const modelMatrix = mat4.create();
 
   // Now move the drawing position a bit to where we want to
   // start drawing the square.
 
-  mat4.translate(modelViewMatrix,     // destination matrix
-                 modelViewMatrix,     // matrix to translate
-                 [-0.0, 0.0, zTrans]);  // amount to translate  z轴平移
-  mat4.rotate(modelViewMatrix,  // destination matrix
-              modelViewMatrix,  // matrix to rotate
-              1,     // amount to rotate in radians
-              [0, 0, 0]);       // axis to rotate around         z轴旋转
-  mat4.rotate(modelViewMatrix,  // destination matrix
-              modelViewMatrix,  // matrix to rotate
-              cubeRotation * xRota ,// amount to rotate in radians
-              [0, 1, 0]);       // axis to rotate around         x轴旋转
+  mat4.translate(
+    modelMatrix,     // destination matrix
+    modelMatrix,     // matrix to translate
+    [-0.0, 0.0, 0.0]
+  );                 // amount to translate  z轴平移
+
+  mat4.translate(
+    viewMatrix,     // destination matrix
+    viewMatrix,     // matrix to translate
+    [0.0, 0.0, -30.0]
+  );                 // amount to translate  z轴平移
+
+  mat4.rotate(
+    viewMatrix,  // destination matrix
+    viewMatrix,  // matrix to rotate
+    cubeRotation * xRota,// amount to rotate in radians
+    [0, 1, 0]
+  );                 // axis to rotate around         x轴旋转
+  
 
   // Tell WebGL how to pull out the positions from the position
   // buffer into the vertexPosition attribute
@@ -392,9 +403,13 @@ function drawScene(gl, programInfo, buffers, texture, deltaTime) {
       false,
       projectionMatrix);
   gl.uniformMatrix4fv(
-      programInfo.uniformLocations.modelViewMatrix,
-      false,
-      modelViewMatrix);
+    programInfo.uniformLocations.viewMatrix,
+    false,
+    viewMatrix);
+  gl.uniformMatrix4fv(
+    programInfo.uniformLocations.modelMatrix,
+    false,
+    modelMatrix);    
 
   // Specify the texture to map onto the faces.
 

@@ -222,7 +222,7 @@ function initBuffers(gl) {
 }
 
 //
-// Initialize a texture and load an image.
+// Initialize a texture and load an image. only one time.
 // When the image finished loading copy it into the texture.
 //
 function loadTexture(gl, url) {
@@ -242,7 +242,7 @@ function loadTexture(gl, url) {
   const srcFormat = gl.RGBA;
   const srcType = gl.UNSIGNED_BYTE;
   const pixel = new Uint8Array([0, 0, 255, 255]);  // opaque blue
-  gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+  gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,     // gl.texImage2D 的重载
                 width, height, border, srcFormat, srcType,
                 pixel);
 
@@ -529,8 +529,14 @@ function drawAsia(gl, programInfo, buffers, texture, deltaTime, sunMatrix) {
 // Draw the Asia scene.
 //
 function drawMoon(gl, programInfo, buffers, texture, deltaTime, asiaMatrix) {
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
+    gl.clearDepth(1.0);                 // Clear everything
     gl.enable(gl.DEPTH_TEST);           // Enable depth testing
     gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
+
+    // Clear the canvas before we start drawing on it.
+
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
                                         
   
     const modelViewMatrix = mat4.create();
