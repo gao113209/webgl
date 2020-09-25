@@ -1,14 +1,16 @@
 var cubeRotation = 0.0;
 var zTrans       = -6;
 var xRota        = 1;
-
+var yRota        = 1;
+const canvas = document.querySelector('#glcanvas');
 main();
 
 //
 // Start here
 //
 function main() {
-  const canvas = document.querySelector('#glcanvas');
+  
+  mouseInteract();
   const gl = canvas.getContext('webgl');
 
   // If we don't have a GL context, give up now
@@ -69,7 +71,7 @@ function main() {
   // objects we'll be drawing.
   const buffers = initBuffers(gl);
 
-  const texture = loadTexture(gl, 'img/sun.jpg');
+  const texture = loadTexture(gl, 'img/asia.jpg');
 
   var then = 0;
   
@@ -336,16 +338,23 @@ function drawScene(gl, programInfo, buffers, texture, deltaTime) {
   );                 // amount to translate  z轴平移
 
   mat4.translate(
-    viewMatrix,     // destination matrix
-    viewMatrix,     // matrix to translate
-    [0.0, 0.0, -30.0]
+    viewMatrix,      // destination matrix
+    viewMatrix,      // matrix to translate
+    [0.0, 0.0, -10.0]
   );                 // amount to translate  z轴平移
 
   mat4.rotate(
-    viewMatrix,  // destination matrix
-    viewMatrix,  // matrix to rotate
-    cubeRotation * xRota,// amount to rotate in radians
+    viewMatrix,      // destination matrix
+    viewMatrix,      // matrix to rotate
+    xRota,           // amount to rotate in radians
     [0, 1, 0]
+  );                 // axis to rotate around         y轴旋转
+
+  mat4.rotate(
+    viewMatrix,      // destination matrix
+    viewMatrix,      // matrix to rotate
+    yRota,           // amount to rotate in radians
+    [1, 0, 0]
   );                 // axis to rotate around         x轴旋转
   
 
@@ -484,12 +493,34 @@ function loadShader(gl, type, source) {
   return shader;
 }
 
-function close(){
-  zTrans += 1;
-  xRota  *= 0.5;
+function mouseInteract(){
+  canvas.onmousedown = handleMouseDown;
+  canvas.onmouseup   = handleMouseUp;
+  canvas.onmousemove = handleMouseMove;
 }
 
-function far(){
-  zTrans -= 1;
-  xRota  *= 2;
+//
+// 鼠标事件
+//
+var _mouseDowm = false;
+var lastMouseX = 0;
+var lastMouseY = 0;
+function handleMouseDown(event){
+  lastMouseX = event.clientX;
+  lastMouseX = event.clientX;
+  //alert(lastMouseX);
+  _mouseDowm = true;
+}
+
+function handleMouseUp(event){
+  _mouseDowm = false;
+}
+
+function handleMouseMove(event){
+  if (!_mouseDowm)
+    return;
+  var offsetX = event.clientX - lastMouseX;
+  var offsetY = event.clientY - lastMouseY;
+  xRota       = offsetX * 0.01;
+  yRota       = offsetY * 0.01;
 }
