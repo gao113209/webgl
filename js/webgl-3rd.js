@@ -5,13 +5,15 @@ var yRota        = 1;
 var wheel        = 1;
 
 var camera       = mat4.create();
-var eye          = [0, 0, 2]; 
+var eye          = [0, -0.5, 2]; 
 var center       = [0, 0, 1];
-var up           = [0, 1, 0];
+var up           = [0, 2, 1];
 mat4.lookAt(camera, eye, center, up);
  // ^replace the viewMatrix with camera which is a inverse matrix of viewMatrix. 
 var vec          = vec3.create();
 vec3.set(vec, 0, 0, 0);
+var vecOld       = vec3.create();
+
 var invertP    = mat4.create();
 
 const canvas     = document.querySelector('#glcanvas');
@@ -276,7 +278,7 @@ function isPowerOf2(value) {
 // Draw the scene.
 //
 function drawScene(gl, programInfo, buffers, texture, textureB, deltaTime) {
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
+    gl.clearColor(0.0, 1.0, 1.0, 1.0);  // Clear to black, fully opaque
     gl.clearDepth(1.0);                 // Clear everything
     gl.enable(gl.DEPTH_TEST);           // Enable depth testing
     gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
@@ -284,13 +286,6 @@ function drawScene(gl, programInfo, buffers, texture, textureB, deltaTime) {
     // Clear the canvas before we start drawing on it.
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    // Create a perspective matrix, a special matrix that is
-    // used to simulate the distortion of perspective in a camera.
-    // Our field of view is 45 degrees, with a width/height
-    // ratio that matches the display size of the canvas
-    // and we only want to see objects between 0.1 units
-    // and 100 units away from the camera.
 
     const fieldOfView = 45 * Math.PI / 180;   // in radians
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
@@ -326,6 +321,12 @@ function drawScene(gl, programInfo, buffers, texture, textureB, deltaTime) {
     mat4.translate(
         modelMatrixB,     // destination matrix
         modelMatrixB,     // matrix to translate
+        [-vecOld[0], -vecOld[1], 0.0]
+    );                 // amount to translate  Z轴平移
+
+    mat4.translate(
+        modelMatrixB,     // destination matrix
+        modelMatrixB,     // matrix to translate
         [vec[0], vec[1], 0.0]
     );                 // amount to translate  Z轴平移
 
@@ -334,14 +335,6 @@ function drawScene(gl, programInfo, buffers, texture, textureB, deltaTime) {
         modelMatrixB,     // matrix to translate
         [20.0, 20.0, 0.0]
     );                 // amount to scale
-
-    mat4.scale(
-        modelMatrix,     // destination matrix
-        modelMatrix,     // matrix to translate
-        [wheel, wheel, wheel]
-    );                 // amount to scale
-
-
     
     mat4.translate(
         viewMatrix,      // destination matrix
@@ -376,7 +369,7 @@ function drawScene(gl, programInfo, buffers, texture, textureB, deltaTime) {
 
     mat4.invert( invertP, projectionMatrix );
 
-    //console.log(projectionMatrix);
+    //console.log(invertP);
 
     var vec1 = vec3.create();
     vec3.set(vec1, 1, 1, 1);
@@ -597,10 +590,20 @@ function screen2model(event){
     // 标准化屏幕坐标 -1 0 1
     modelXY[0]   =  -( event.clientX - ( gl.canvas.clientWidth / 2 ) ) / gl.canvas.clientWidth * 2;
     modelXY[1]   =  ( event.clientY - ( gl.canvas.clientHeight / 2 ) ) / gl.canvas.clientHeight * 2;
-    
-    vec3.set(vec, modelXY[0], modelXY[1], 1);
+    // 由于使用地球的投影矩阵的逆矩阵作为变形矩阵，因而背景的移动不会造成投影矩阵的变动
+    // 所以需要引入上一次移动的归一化的坐标，对本次移动进行校正
+    vec3.set(vec, modelXY[0] + vecOld[0], modelXY[1] + vecOld[1], 1);
+    vec3.set(vecOld, vec[0], vec[1], 1);
     vec3.transformMat4(vec, vec, invertP);
-    var factor = vec[2] / -45;
-    vec3.set(vec, vec[0] / factor, vec[1] / factor, vec[2] / factor);
-
+    //vec3.transformMat4(vecOld, vecOld, invertP);
+    
+    var factor = vec[2] / -45; //背景的Z偏值，用以归一化投影后向量的第四分量
+    vec3.set(
+    vec, 
+    ((vec[0]) / factor) , 
+    ((vec[1]) / factor) ,
+    ((vec[2]) / factor) ,
+    );
+    console.log(vecOld);
+    console.log(vec);
 }

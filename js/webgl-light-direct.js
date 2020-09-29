@@ -30,6 +30,7 @@ function main() {
     uniform mat4       uViewMatrix;
     uniform mat4       uModelMatrix;
     uniform mat4       uProjectionMatrix;
+    
     varying highp vec2 vTextureCoord;
     varying vec3       vNormal;
 

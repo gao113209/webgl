@@ -62,7 +62,9 @@ function main() {
     varying   vec3        vSurface2Light;
     varying   vec3        vSurface2View;
     // Varing 线性插值传递各向量  
-    uniform   sampler2D   uSampler;   
+    uniform   sampler2D   uSampler; 
+    // 用 指数变化 取代 线性变化的高亮过渡 
+    uniform   float       uSmooth; 
    
     void main(void) {
       vec3 nSurface2View  = normalize(vSurface2View);  
@@ -71,9 +73,16 @@ function main() {
       vec3 nNormal        = normalize(vNormal);
       // 在一般点光源的前提下，加高光
       float light         = dot(nNormal, nSurface2Light);
+      float highLight     = dot(nNormal, nHalf);
+      // 中间向量与法向量相反时，默认不加高光
+      float smooth        = 0.0;
+      // 中间向量与法向量的点积<=1 
+      if(highLight > 0.0){
+          smooth = pow(highLight,200.0);
+      }
       gl_FragColor        = texture2D(uSampler, vTextureCoord);
       gl_FragColor.rgb   *= light;
-      gl_FragColor.rgb   += dot(nNormal, nSurface2Light);
+      gl_FragColor.rgb   += smooth;
     }
   `;
 

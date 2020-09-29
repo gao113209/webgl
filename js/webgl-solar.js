@@ -539,7 +539,7 @@ function drawMoon(gl, programInfo, buffers, texture, deltaTime, asiaMatrix) {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
                                         
   
-    const modelViewMatrix = mat4.create();
+    //const modelViewMatrix = mat4.create();
 
     const fieldOfView = 90 * Math.PI / 180;   // in radians
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
@@ -553,12 +553,7 @@ function drawMoon(gl, programInfo, buffers, texture, deltaTime, asiaMatrix) {
         fieldOfView,
         aspect,
         zNear,
-        zFar);       
-
-
-    mat4.scale(modelViewMatrix,  // destination matrix
-             modelViewMatrix,         // matrix to rotate
-             [0.5,0.5,0.5]);                    //               缩放
+        zFar);      
     
   
     // Tell WebGL how to pull out the positions from the position
